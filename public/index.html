@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Win/Loss Streak</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bitcount+Single:wght@100..900&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body,
+      html {
+        padding: 0;
+        margin: 0;
+      }
+      body {
+        font-family: "Bitcount Single", "PT Sans", "Courier New", Courier,
+          monospace, system-ui, sans-serif;
+        width: 100svw;
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: #00ffa8;
+        background: rgba(0, 0, 0, 0.8);
+        padding-bottom: 0;
+      }
+
+      h1 {
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      div#info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        padding-bottom: 0;
+        font-size: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Win/Loss Streak</h1>
+    <div id="info">
+      <p>
+        Win Streak: <span id="win-count"></span><br />
+        Total Wins: <span id="total-wins-count"></span><br />
+      </p>
+      <p>
+        Loss Streak: <span id="loss-count"></span><br />
+        Total Losses: <span id="total-losses-count"></span><br />
+      </p>
+    </div>
+    <script type="text/javascript">
+      window.onload = () => {
+        let wsClient;
+
+        function createWsConnection() {
+          wsClient = new WebSocket(
+            document.location.origin.replace("http", "ws")
+          );
+          wsClient.onopen = () => {
+            console.log("WebSocket connection established");
+          };
+          wsClient.onmessage = (event) => {
+            console.log("Message from server:", event.data);
+            try {
+              const eventData = JSON.parse(event.data);
+              const { command, data } = eventData;
+              if (command === "update") {
+                document.getElementById("win-count").innerText = data.win;
+                document.getElementById("loss-count").innerText = data.lost;
+                document.getElementById("total-wins-count").innerText =
+                  data.totalWins;
+                document.getElementById("total-losses-count").innerText =
+                  data.totalLost;
+              }
+            } catch (error) {
+              console.error("Error parsing message:", error);
+            }
+          };
+          wsClient.onclose = () => {
+            console.log("WebSocket connection closed");
+            setTimeout(() => {
+              console.log("Reconnecting WebSocket...");
+              createWsConnection();
+            }, 1000);
+          };
+          wsClient.onerror = (error) => {
+            console.error("WebSocket error:", error);
+            if (wsClient) wsClient.close();
+          };
+        }
+
+        createWsConnection();
+      };
+    </script>
+  </body>
+</html>
